@@ -17,9 +17,7 @@ import MapViewDirections from 'react-native-maps-directions';
 
 const { width } = Dimensions.get('window');
 
-// ATENÇÃO: Insira sua Google Maps API Key aqui
 const EXPO_PUBLIC_GOOGLE_MAPS_APIKEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_APIKEY;
-console.log(EXPO_PUBLIC_GOOGLE_MAPS_APIKEY)
 
 const RotaScreen = () => {
     const { colors, isDark } = useTheme();

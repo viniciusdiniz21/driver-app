@@ -13,6 +13,7 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { StatusBar } from 'expo-status-bar';
+import AnimatedLogo from '../components/AnimatedLogo';
 
 const LoginScreen = () => {
     const { colors, isDark } = useTheme();
@@ -34,9 +35,9 @@ const LoginScreen = () => {
                 <StatusBar style={isDark ? 'light' : 'dark'} />
 
                 <View style={styles.header}>
-                    <Text style={[styles.logo, { color: '#FE8330' }]}>DRIVER</Text>
+                    <AnimatedLogo size={120} />
                     <Text style={[styles.subtitle, { color: colors.muted }]}>
-                        Sua jornada começa aqui
+                        Gestão do motorista
                     </Text>
                 </View>
 

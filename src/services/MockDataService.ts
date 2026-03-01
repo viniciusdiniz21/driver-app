@@ -1,8 +1,8 @@
 import { User, Position, Viagem, Coordinate } from '../mocks/data';
 
 const currentUser: User = {
-    name: 'João Motorista',
-    email: 'joao.silva@driverapp.com',
+    name: 'Motorista',
+    email: 'motorista@driverapp.com',
     photo: 'https://i.pravatar.cc/150?u=joao',
     carModel: 'Toyota Corolla 2023',
     licensePlate: 'ABC-1234',
