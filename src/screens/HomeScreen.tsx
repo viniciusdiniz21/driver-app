@@ -86,7 +86,7 @@ const HomeScreen = () => {
                             </View>
                         </View>
 
-                        <View style={styles.infoRow}>
+                        <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
                             <Gauge size={20} color={colors.primary} />
                             <View style={styles.infoTextContainer}>
                                 <Text style={[styles.infoLabel, { color: colors.muted }]}>Velocidade Atual</Text>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
         flex: 1, // Ocupa a metade inferior
         borderTopLeftRadius: 35,
         borderTopRightRadius: 35,
-        marginTop: -30, // Sobreposição leve
+        marginTop: -10, // Sobreposição leve
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -10 },
         shadowOpacity: 0.1,

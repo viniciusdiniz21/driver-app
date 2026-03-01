@@ -1,4 +1,4 @@
-import { User, Position } from '../mocks/data';
+import { User, Position, Viagem, Coordinate } from '../mocks/data';
 
 const currentUser: User = {
     name: 'João Motorista',
@@ -53,14 +53,50 @@ const generateTrajectory = (days: number, pointsPerDay: number): Position[] => {
     return positions.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 };
 
-// Gera 150 pontos (3 dias * 50 pontos)
+/**
+ * Agrupa as posições em viagens baseadas na ignição ou apenas divide a trajetória em blocos.
+ */
+const getMockViagens = (trajectory: Position[]): Viagem[] => {
+    const viagens: Viagem[] = [];
+    const pointsPerTrip = 25; // Dividir os 150 pontos em 6 viagens de 25 pontos
+
+    for (let i = 0; i < trajectory.length; i += pointsPerTrip) {
+        const tripPoints = trajectory.slice(i, i + pointsPerTrip);
+        if (tripPoints.length < 2) continue;
+
+        const startTime = tripPoints[0].timestamp;
+        const endTime = tripPoints[tripPoints.length - 1].timestamp;
+
+        const distance = tripPoints.reduce((acc, p) => acc + (p.distance_from_last || 0), 0) / 1000;
+        const maxSpeed = Math.max(...tripPoints.map(p => p.speed));
+
+        const path: Coordinate[] = tripPoints.map(p => ({
+            latitude: p.latitude,
+            longitude: p.longitude
+        }));
+
+        viagens.push({
+            id: `v-${i}`,
+            startTime,
+            endTime,
+            distance: parseFloat(distance.toFixed(1)),
+            maxSpeed,
+            path
+        });
+    }
+
+    return viagens.reverse(); // Mais recentes primeiro
+};
+
 const mockTrajectory = generateTrajectory(3, 50);
+const mockViagens = getMockViagens(mockTrajectory);
 
 export const MockDataService = {
     getUser: () => currentUser,
+    getViagens: () => mockViagens,
     getTrajectory: () => mockTrajectory,
     getTrajectoryByDate: (date: Date) => {
-        return mockTrajectory.filter(pos => {
+        return mockTrajectory.filter((pos: Position) => {
             const posDate = new Date(pos.timestamp);
             return posDate.getFullYear() === date.getFullYear() &&
                 posDate.getMonth() === date.getMonth() &&

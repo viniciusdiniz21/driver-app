@@ -22,6 +22,20 @@ export interface Position {
     timestamp: string;
 }
 
+export interface Coordinate {
+    latitude: number;
+    longitude: number;
+}
+
+export interface Viagem {
+    id: string;
+    startTime: string;
+    endTime: string;
+    distance: number; // em km
+    maxSpeed: number; // em km/h
+    path: Coordinate[];
+}
+
 export interface Event {
     id: string;
     vehicle_id: string;

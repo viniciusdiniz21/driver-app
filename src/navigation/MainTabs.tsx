@@ -5,13 +5,13 @@ import { useTheme } from '../theme/ThemeProvider';
 
 import HomeScreen from '../screens/HomeScreen';
 import RotaScreen from '../screens/RotaScreen';
-import HistoryScreen from '../screens/HistoryScreen';
+import RastroStack from './RastroStack';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export type MainTabParamList = {
     Home: undefined;
     Rota: undefined;
-    History: undefined;
+    Rastro: undefined;
     Profile: undefined;
 };
 
@@ -23,7 +23,7 @@ const MainTabs = () => {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                headerShown: route.name !== 'Home' && route.name !== 'Rota' && route.name !== 'History' && route.name !== 'Profile',
+                headerShown: false,
                 tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: colors.muted,
                 tabBarStyle: {
@@ -44,7 +44,6 @@ const MainTabs = () => {
                 component={HomeScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
-                    headerShown: false,
                 }}
             />
             <Tab.Screen
@@ -52,15 +51,14 @@ const MainTabs = () => {
                 component={RotaScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => <Map size={size} color={color} />,
-                    headerShown: false,
                 }}
             />
             <Tab.Screen
-                name="History"
-                component={HistoryScreen}
+                name="Rastro"
+                component={RastroStack}
                 options={{
                     tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
-                    headerShown: false,
+                    tabBarLabel: 'Rastro',
                 }}
             />
             <Tab.Screen
@@ -68,7 +66,6 @@ const MainTabs = () => {
                 component={ProfileScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
-                    headerShown: false,
                 }}
             />
         </Tab.Navigator>
