@@ -1,22 +1,21 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { Car, History, User as UserIcon, LogOut } from 'lucide-react-native';
+import { Car, History, User as UserIcon, LogOut, Navigation, Clock, Gauge } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { MockDataService } from '../services/MockDataService';
 import { StatusBar } from 'expo-status-bar';
-
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../navigation/MainTabs';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
     const { colors, isDark } = useTheme();
     const { logout } = useAuth();
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
 
     const lastPos = MockDataService.getLastPosition();
     const user = MockDataService.getUser();
@@ -28,80 +27,74 @@ const HomeScreen = () => {
         longitudeDelta: 0.005,
     };
 
+    const formatTimestamp = (isoString: string) => {
+        const date = new Date(isoString);
+        return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar style={isDark ? 'light' : 'dark'} />
 
-            <MapView
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                initialRegion={initialRegion}
-                userInterfaceStyle={isDark ? 'dark' : 'light'}
-            >
-                <Marker
-                    coordinate={{
-                        latitude: lastPos.latitude,
-                        longitude: lastPos.longitude,
-                    }}
-                    title="Sua Posição"
-                    description={`${user.carModel} - ${user.licensePlate}`}
+            <View style={styles.mapContainer}>
+                <MapView
+                    provider={PROVIDER_GOOGLE}
+                    style={styles.map}
+                    initialRegion={initialRegion}
+                    userInterfaceStyle={isDark ? 'dark' : 'light'}
                 >
-                    <View style={[styles.markerContainer, { backgroundColor: '#FFF' }]}>
-                        <Car size={30} color="#FE8330" fill="#FE8330" />
-                    </View>
-                </Marker>
-            </MapView>
-
-            {/* Floating Buttons */}
-            <View style={styles.floatingButtons}>
-                <TouchableOpacity
-                    style={[styles.fab, { backgroundColor: colors.card }]}
-                    onPress={logout}
-                    activeOpacity={0.7}
-                >
-                    <LogOut size={24} color={colors.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.fab, { backgroundColor: colors.card }]}
-                    onPress={() => navigation.navigate('History')}
-                    activeOpacity={0.7}
-                >
-                    <History size={24} color={colors.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.fab, { backgroundColor: colors.card }]}
-                    onPress={() => navigation.navigate('Profile')}
-                    activeOpacity={0.7}
-                >
-                    <UserIcon size={24} color={colors.primary} />
-                </TouchableOpacity>
+                    <Marker
+                        coordinate={{
+                            latitude: lastPos.latitude,
+                            longitude: lastPos.longitude,
+                        }}
+                    >
+                        <View style={[styles.markerContainer, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+                            <Car size={24} color={colors.primary} fill={colors.primary} />
+                        </View>
+                    </Marker>
+                </MapView>
             </View>
 
-            {/* Bottom Info Card */}
-            <View style={[styles.bottomCard, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-                <View style={styles.cardIndicator} />
-                <View style={styles.cardHeader}>
-                    <View>
-                        <Text style={[styles.address, { color: colors.text }]}>Av. Afonso Pena, 1200</Text>
-                        <Text style={[styles.city, { color: colors.muted }]}>Uberlândia, MG</Text>
+            <View style={[styles.panel, { backgroundColor: colors.card }]}>
+                <View style={styles.panelContent}>
+                    <View style={styles.vehicleHeader}>
+                        <Text style={[styles.title, { color: colors.text }]}>{user.carModel}</Text>
+                        <View style={[styles.badge, { backgroundColor: colors.primary + '20' }]}>
+                            <Text style={[styles.badgeText, { color: colors.primary }]}>{user.licensePlate}</Text>
+                        </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: colors.primary + '20' }]}>
-                        <Text style={[styles.statusText, { color: colors.primary }]}>Online</Text>
-                    </View>
-                </View>
 
-                <View style={styles.cardDetails}>
-                    <View style={styles.detailItem}>
-                        <Text style={[styles.detailLabel, { color: colors.muted }]}>Última atualização</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>
-                            {new Date(lastPos.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Text style={[styles.detailLabel, { color: colors.muted }]}>Velocidade</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{lastPos.speed} km/h</Text>
+                    <View style={styles.infoSection}>
+                        <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                            <Navigation size={20} color={colors.primary} />
+                            <View style={styles.infoTextContainer}>
+                                <Text style={[styles.infoLabel, { color: colors.muted }]}>Localização</Text>
+                                <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>
+                                    Av. Afonso Pena, 1200 - Uberlândia, MG
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                            <Clock size={20} color={colors.primary} />
+                            <View style={styles.infoTextContainer}>
+                                <Text style={[styles.infoLabel, { color: colors.muted }]}>Última Atualização</Text>
+                                <Text style={[styles.infoValue, { color: colors.text }]}>
+                                    {formatTimestamp(lastPos.timestamp)}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.infoRow}>
+                            <Gauge size={20} color={colors.primary} />
+                            <View style={styles.infoTextContainer}>
+                                <Text style={[styles.infoLabel, { color: colors.muted }]}>Velocidade Atual</Text>
+                                <Text style={[styles.infoValue, { color: colors.primary, fontSize: 22, fontWeight: '800' }]}>
+                                    {lastPos.speed} <Text style={{ fontSize: 14 }}>km/h</Text>
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -115,98 +108,94 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    mapContainer: {
+        flex: 1, // Ocupa a metade superior
+    },
     map: {
         ...StyleSheet.absoluteFillObject,
     },
     markerContainer: {
         padding: 8,
-        borderRadius: 25,
+        borderRadius: 20,
+        borderWidth: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 5,
-        borderWidth: 2,
-        borderColor: '#FE8330',
     },
-    floatingButtons: {
-        position: 'absolute',
-        right: 20,
-        top: 60,
-        gap: 15,
-    },
-    fab: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
+    panel: {
+        flex: 1, // Ocupa a metade inferior
+        borderTopLeftRadius: 35,
+        borderTopRightRadius: 35,
+        marginTop: -30, // Sobreposição leve
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    bottomCard: {
-        position: 'absolute',
-        bottom: 0,
-        width: width,
-        paddingHorizontal: 25,
-        paddingTop: 10,
-        paddingBottom: 40,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        borderTopWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
+        shadowOffset: { width: 0, height: -10 },
         shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 10,
+        shadowRadius: 15,
+        elevation: 20,
     },
-    cardIndicator: {
-        width: 40,
-        height: 5,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 3,
-        alignSelf: 'center',
-        marginBottom: 20,
+    panelContent: {
+        flex: 1,
+        padding: 25,
+        justifyContent: 'space-between',
     },
-    cardHeader: {
+    vehicleHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 25,
+        marginBottom: 20,
     },
-    address: {
-        fontSize: 18,
-        fontWeight: 'bold',
+    title: {
+        fontSize: 22,
+        fontWeight: '900',
     },
-    city: {
-        fontSize: 14,
-        marginTop: 2,
-    },
-    statusBadge: {
-        paddingHorizontal: 15,
+    badge: {
+        paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
     },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '700',
+    badgeText: {
+        fontSize: 14,
+        fontWeight: 'bold',
     },
-    cardDetails: {
+    infoSection: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    infoRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 15,
+        borderBottomWidth: 1,
     },
-    detailItem: {
+    infoTextContainer: {
+        marginLeft: 15,
         flex: 1,
     },
-    detailLabel: {
+    infoLabel: {
         fontSize: 12,
-        marginBottom: 4,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    detailValue: {
+    infoValue: {
         fontSize: 16,
+        fontWeight: '700',
+        marginTop: 2,
+    },
+    actionMenu: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingTop: 20,
+        borderTopWidth: 1,
+    },
+    actionButton: {
+        alignItems: 'center',
+        gap: 8,
+    },
+    actionText: {
+        fontSize: 12,
         fontWeight: '600',
     },
 });
