@@ -44,6 +44,7 @@ const MainTabs = () => {
                 component={HomeScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+                    tabBarLabel: 'Início',
                 }}
             />
             <Tab.Screen
@@ -66,6 +67,7 @@ const MainTabs = () => {
                 component={ProfileScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+                    tabBarLabel: 'Perfil',
                 }}
             />
         </Tab.Navigator>

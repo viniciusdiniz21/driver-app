@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     StyleSheet,
     View,
-    TextInput,
-    TouchableOpacity,
     Text,
     ActivityIndicator,
     Alert,
-    Keyboard,
-    Dimensions
+    Dimensions,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { MapPin, Navigation, Search, Loader2 } from 'lucide-react-native';
+import { MapPin, Navigation } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { StatusBar } from 'expo-status-bar';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import MapViewDirections from 'react-native-maps-directions';
 
-// Mock de MapViewDirections pois não temos API Key
-// import MapViewDirections from 'react-native-maps-directions';
+const { width } = Dimensions.get('window');
 
-const { width, height } = Dimensions.get('window');
+// ATENÇÃO: Insira sua Google Maps API Key aqui
+const EXPO_PUBLIC_GOOGLE_MAPS_APIKEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_APIKEY;
+console.log(EXPO_PUBLIC_GOOGLE_MAPS_APIKEY)
 
 const RotaScreen = () => {
     const { colors, isDark } = useTheme();
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
-    const [destination, setDestination] = useState('');
+    const mapRef = useRef<MapView>(null);
+
+    const [origin, setOrigin] = useState<{ latitude: number, longitude: number } | null>(null);
+    const [destination, setDestination] = useState<{ latitude: number, longitude: number } | null>(null);
     const [loading, setLoading] = useState(true);
-    const [routing, setRouting] = useState(false);
-    const [destCoords, setDestCoords] = useState<{ latitude: number, longitude: number } | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -39,119 +39,113 @@ const RotaScreen = () => {
             }
 
             let currentLocation = await Location.getCurrentPositionAsync({});
-            setLocation(currentLocation);
+            setOrigin({
+                latitude: currentLocation.coords.latitude,
+                longitude: currentLocation.coords.longitude,
+            });
             setLoading(false);
         })();
     }, []);
-
-    const handleTraceRoute = () => {
-        if (!destination) return;
-
-        Keyboard.dismiss();
-        setRouting(true);
-
-        // Simulação de busca de endereço e traçado de rota
-        setTimeout(() => {
-            if (location) {
-                // Mock: coloca o destino 2km ao norte do usuário
-                setDestCoords({
-                    latitude: location.coords.latitude + 0.015,
-                    longitude: location.coords.longitude + 0.01,
-                });
-            }
-            setRouting(false);
-        }, 1500);
-    };
 
     if (loading) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.text }]}>Buscando sua localização...</Text>
+                <Text style={[styles.loadingText, { color: colors.text }]}>Obtendo localização...</Text>
             </View>
         );
     }
 
     const initialRegion = {
-        latitude: location?.coords.latitude || -18.9113,
-        longitude: location?.coords.longitude || -48.2622,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitude: origin?.latitude || -18.9113,
+        longitude: origin?.longitude || -48.2622,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.015,
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar style={isDark ? 'light' : 'dark'} />
 
             <MapView
+                ref={mapRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 initialRegion={initialRegion}
                 showsUserLocation={true}
                 userInterfaceStyle={isDark ? 'dark' : 'light'}
             >
-                {location && (
-                    <Marker
-                        coordinate={{
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                        }}
-                        title="Você está aqui"
-                    >
+                {origin && (
+                    <Marker coordinate={origin} title="Você está aqui">
                         <View style={[styles.markerContainer, { backgroundColor: colors.card, borderColor: colors.primary }]}>
-                            <MapPin size={24} color={colors.primary} fill={colors.primary} />
+                            <Navigation size={22} color={colors.primary} fill={colors.primary} />
                         </View>
                     </Marker>
                 )}
 
-                {destCoords && (
-                    <Marker
-                        coordinate={destCoords}
-                        title="Destino"
-                        pinColor="red"
-                    />
+                {destination && (
+                    <Marker coordinate={destination} title="Destino">
+                        <View style={[styles.markerContainer, { backgroundColor: colors.card, borderColor: '#FF4444' }]}>
+                            <MapPin size={22} color="#FF4444" fill="#FF4444" />
+                        </View>
+                    </Marker>
                 )}
 
-                {/* 
-                {location && destCoords && (
+                {origin && destination && (
                     <MapViewDirections
-                        origin={{ latitude: location.coords.latitude, longitude: location.coords.longitude }}
-                        destination={destCoords}
-                        apikey="SUA_API_KEY_AQUI"
-                        strokeWidth={3}
+                        origin={origin}
+                        destination={destination}
+                        apikey={EXPO_PUBLIC_GOOGLE_MAPS_APIKEY}
+                        strokeWidth={4}
                         strokeColor={colors.primary}
+                        onReady={(result) => {
+                            mapRef.current?.fitToCoordinates(result.coordinates, {
+                                edgePadding: {
+                                    top: 100,
+                                    right: 50,
+                                    bottom: 100,
+                                    left: 50,
+                                },
+                            });
+                        }}
+                        onError={(errorMessage) => {
+                            console.error('Directions Error:', errorMessage);
+                        }}
                     />
                 )}
-                */}
             </MapView>
 
-            {/* Overlay Search Card */}
-            <View style={[styles.searchCard, { backgroundColor: colors.card }]}>
-                <View style={[styles.inputContainer, { backgroundColor: isDark ? '#333' : '#F5F5F5' }]}>
-                    <Search size={20} color={colors.muted} style={styles.searchIcon} />
-                    <TextInput
-                        style={[styles.input, { color: colors.text }]}
-                        placeholder="Para onde vamos?"
-                        placeholderTextColor={colors.muted}
-                        value={destination}
-                        onChangeText={setDestination}
-                    />
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.routeButton, { backgroundColor: colors.primary }]}
-                    onPress={handleTraceRoute}
-                    disabled={routing || !destination}
-                >
-                    {routing ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <>
-                            <Navigation size={20} color="#FFF" />
-                            <Text style={styles.routeButtonText}>Traçar Rota</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+            {/* Overlay Search - Google Places Autocomplete */}
+            <View style={styles.searchContainer}>
+                <GooglePlacesAutocomplete
+                    placeholder="Para onde vamos?"
+                    fetchDetails={true}
+                    onPress={(data, details = null) => {
+                        if (details) {
+                            setDestination({
+                                latitude: details.geometry.location.lat,
+                                longitude: details.geometry.location.lng,
+                            });
+                        }
+                    }}
+                    query={{
+                        key: EXPO_PUBLIC_GOOGLE_MAPS_APIKEY,
+                        language: 'pt-BR',
+                    }}
+                    styles={{
+                        container: styles.autocompleteContainer,
+                        textInput: [styles.input, { backgroundColor: colors.card, color: colors.text }],
+                        listView: [styles.listView, { backgroundColor: colors.card }],
+                        row: { backgroundColor: colors.card, padding: 13, height: 44, flexDirection: 'row' },
+                        separator: { height: 0.5, backgroundColor: colors.border },
+                        description: { color: colors.text },
+                        predefinedPlacesDescription: { color: colors.primary },
+                    }}
+                    enablePoweredByContainer={false}
+                    minLength={2}
+                    keyboardShouldPersistTaps="handled"
+                    nearbyPlacesAPI="GooglePlacesSearch"
+                />
             </View>
         </View>
     );
@@ -164,7 +158,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     map: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
     },
     loadingContainer: {
         flex: 1,
@@ -177,7 +171,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     markerContainer: {
-        padding: 8,
+        padding: 6,
         borderRadius: 20,
         borderWidth: 2,
         shadowColor: '#000',
@@ -186,46 +180,35 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
     },
-    searchCard: {
+    searchContainer: {
         position: 'absolute',
         top: 60,
-        left: 20,
-        right: 20,
-        borderRadius: 20,
-        padding: 15,
+        width: '100%',
+        paddingHorizontal: 20,
+        zIndex: 1,
+    },
+    autocompleteContainer: {
+        flex: 0,
+    },
+    input: {
+        borderRadius: 15,
+        height: 55,
+        fontSize: 16,
+        fontWeight: '500',
+        paddingHorizontal: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 5 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 10,
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        height: 50,
-        marginBottom: 12,
-    },
-    searchIcon: {
-        marginRight: 10,
-    },
-    input: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    routeButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 50,
-        borderRadius: 12,
-        gap: 10,
-    },
-    routeButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
+    listView: {
+        borderRadius: 15,
+        marginTop: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 20,
     },
 });
